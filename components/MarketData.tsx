@@ -4,6 +4,8 @@ import { useRouter } from "next/router";
 
 export default function MarketData() {
   const [data, setData] = useState<any>(null);
+  const [greeksData, setGreeksData] = useState<any>(null);
+  const [ohlcData, setOhlcData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
@@ -38,6 +40,28 @@ export default function MarketData() {
     setData(json);
   };
 
+  const getNiftyGreeks = async () => {
+    const token = localStorage.getItem("upstox_token");
+    if (!token) return;
+
+    const res = await fetch("/api/nifty-greeks", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const json = await res.json();
+    setGreeksData(json);
+  };
+
+  const getNiftyOHLC = async () => {
+    const token = localStorage.getItem("upstox_token");
+    if (!token) return;
+
+    const res = await fetch("/api/nifty-ohlc", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const json = await res.json();
+    setOhlcData(json);
+  };
+
   if (isLoading) {
     return (
       <div className="p-4">
@@ -48,18 +72,50 @@ export default function MarketData() {
 
   return (
     <div className="p-4">
-      <button
-        onClick={getData}
-        className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-      >
-        Get Reliance Quote
-      </button>
+      <div className="flex gap-4 mb-4">
+        <button
+          onClick={getData}
+          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+        >
+          Get Reliance Quote
+        </button>
+        <button
+          onClick={getNiftyGreeks}
+          className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+        >
+          Get Nifty Option Greeks
+        </button>
+        <button
+          onClick={getNiftyOHLC}
+          className="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700"
+        >
+          Get Nifty OHLC
+        </button>
+      </div>
 
       {data && (
         <div className="mt-4">
-          <h3 className="text-lg font-semibold mb-2">Market Data:</h3>
+          <h3 className="text-lg font-semibold mb-2">Reliance Market Data:</h3>
           <pre className="bg-gray-900 text-green-400 p-4 rounded overflow-auto">
             {JSON.stringify(data, null, 2)}
+          </pre>
+        </div>
+      )}
+
+      {greeksData && (
+        <div className="mt-4">
+          <h3 className="text-lg font-semibold mb-2">Nifty Option Greeks:</h3>
+          <pre className="bg-gray-900 text-yellow-400 p-4 rounded overflow-auto">
+            {JSON.stringify(greeksData, null, 2)}
+          </pre>
+        </div>
+      )}
+
+      {ohlcData && (
+        <div className="mt-4">
+          <h3 className="text-lg font-semibold mb-2">Nifty OHLC Data:</h3>
+          <pre className="bg-gray-900 text-blue-400 p-4 rounded overflow-auto">
+            {JSON.stringify(ohlcData, null, 2)}
           </pre>
         </div>
       )}
