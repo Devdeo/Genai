@@ -2,8 +2,8 @@ import type { NextPage } from "next";
 import Head from "next/head";
 import Image from "next/image";
 import styles from "../styles/Home.module.css";
-import GeminiChat from "../components/GeminiChat"
-import MarketData from "../components/MarketData"
+import GeminiChat from "../components/GeminiChat";
+import MarketData from "../components/MarketData";
 
 const Home: NextPage = () => {
   return (
