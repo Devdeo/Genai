@@ -8,7 +8,7 @@ export default async function callback(req: NextApiRequest, res: NextApiResponse
 
   try {
     const tokenRes = await axios.post(
-      "https://api.upstox.com/v2/oauth2/token",
+      "https://api.upstox.com/v2/login/authorization/token",
       {
         code,
         client_id: process.env.UPSTOX_CLIENT_ID,
@@ -16,7 +16,12 @@ export default async function callback(req: NextApiRequest, res: NextApiResponse
         redirect_uri: process.env.REDIRECT_URI,
         grant_type: "authorization_code",
       },
-      { headers: { "Content-Type": "application/json" } }
+      { 
+        headers: { 
+          "Content-Type": "application/x-www-form-urlencoded",
+          "Accept": "application/json"
+        } 
+      }
     );
 
     const accessToken = tokenRes.data.access_token;
@@ -24,6 +29,7 @@ export default async function callback(req: NextApiRequest, res: NextApiResponse
     // redirect to /market with token in query
     res.redirect(`/market?access_token=${accessToken}`);
   } catch (err: any) {
+    console.error("OAuth callback error:", err.response?.data || err.message);
     res.status(500).json(err.response?.data || { error: err.message });
   }
 }
