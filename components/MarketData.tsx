@@ -6,6 +6,9 @@ export default function MarketData() {
   const [data, setData] = useState<any>(null);
   const [greeksData, setGreeksData] = useState<any>(null);
   const [ohlcData, setOhlcData] = useState<any>(null);
+  const [searchResults, setSearchResults] = useState<any>(null);
+  const [stockSymbol, setStockSymbol] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
@@ -62,6 +65,32 @@ export default function MarketData() {
     setOhlcData(json);
   };
 
+  const searchStocks = async () => {
+    if (!searchQuery.trim()) return;
+    
+    const token = localStorage.getItem("upstox_token");
+    if (!token) return;
+
+    const res = await fetch(`/api/search-stocks?query=${encodeURIComponent(searchQuery)}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const json = await res.json();
+    setSearchResults(json);
+  };
+
+  const getStockQuote = async () => {
+    if (!stockSymbol.trim()) return;
+    
+    const token = localStorage.getItem("upstox_token");
+    if (!token) return;
+
+    const res = await fetch(`/api/stock-quote?symbol=${encodeURIComponent(stockSymbol)}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const json = await res.json();
+    setData(json);
+  };
+
   if (isLoading) {
     return (
       <div className="p-4">
@@ -72,6 +101,45 @@ export default function MarketData() {
 
   return (
     <div className="p-4">
+      {/* Stock Search Section */}
+      <div className="mb-6 p-4 bg-gray-100 rounded-lg">
+        <h2 className="text-xl font-semibold mb-4">Stock Search</h2>
+        <div className="flex gap-2 mb-4">
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search stocks (e.g., Reliance, TCS, HDFC)"
+            className="flex-1 px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+            onKeyPress={(e) => e.key === 'Enter' && searchStocks()}
+          />
+          <button
+            onClick={searchStocks}
+            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+          >
+            Search
+          </button>
+        </div>
+        
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={stockSymbol}
+            onChange={(e) => setStockSymbol(e.target.value)}
+            placeholder="Enter stock symbol (e.g., NSE_EQ|INE002A01018)"
+            className="flex-1 px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
+            onKeyPress={(e) => e.key === 'Enter' && getStockQuote()}
+          />
+          <button
+            onClick={getStockQuote}
+            className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+          >
+            Get Quote
+          </button>
+        </div>
+      </div>
+
+      {/* Quick Access Buttons */}
       <div className="flex gap-4 mb-4">
         <button
           onClick={getData}
@@ -93,9 +161,18 @@ export default function MarketData() {
         </button>
       </div>
 
+      {searchResults && (
+        <div className="mt-4">
+          <h3 className="text-lg font-semibold mb-2">Search Results:</h3>
+          <pre className="bg-gray-900 text-cyan-400 p-4 rounded overflow-auto">
+            {JSON.stringify(searchResults, null, 2)}
+          </pre>
+        </div>
+      )}
+
       {data && (
         <div className="mt-4">
-          <h3 className="text-lg font-semibold mb-2">Reliance Market Data:</h3>
+          <h3 className="text-lg font-semibold mb-2">Stock Market Data:</h3>
           <pre className="bg-gray-900 text-green-400 p-4 rounded overflow-auto">
             {JSON.stringify(data, null, 2)}
           </pre>
