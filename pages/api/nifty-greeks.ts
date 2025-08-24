@@ -6,9 +6,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const auth = req.headers.authorization;
   if (!auth) return res.status(401).json({ error: "Missing access token" });
 
-  // Example Nifty Call option instrument key (you may need to update this)
-  const instrumentKey = "NSE_FO|26009"; // Nifty 50 option example
-  const url = `https://api.upstox.com/v2/option/greek?instrument_key=${encodeURIComponent(instrumentKey)}`;
+  // Example Nifty Call option instrument key (you may need to update this with current month/strike)
+  // Format: NSE_FO|[ISIN] where ISIN is the option contract identifier
+  // This is a sample - you'll need to get the actual current month option ISIN
+  const instrumentKey = "NSE_FO|INE009A01021"; // Example Nifty option - update with actual option ISIN
+  const url = `https://api.upstox.com/v2/option/greeks?instrument_key=${encodeURIComponent(instrumentKey)}`;
 
   try {
     const response = await axios.get(url, {
