@@ -12,7 +12,20 @@ export default function MarketData() {
   const [stockSymbol, setStockSymbol] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [isLoading, setIsLoading] = useState(true);
+  const [autoRefresh, setAutoRefresh] = useState(false);
   const router = useRouter();
+
+  // Auto-refresh functionality
+  useEffect(() => {
+    if (!autoRefresh) return;
+    
+    const interval = setInterval(() => {
+      getNiftyOHLC();
+      getNiftyOpenInterest();
+    }, 5000); // Refresh every 5 seconds
+
+    return () => clearInterval(interval);
+  }, [autoRefresh]);
 
   useEffect(() => {
     // Step 1: check token in URL (after callback)
@@ -183,6 +196,12 @@ export default function MarketData() {
         >
           Get Nifty Open Interest
         </button>
+        <button
+          onClick={() => setAutoRefresh(!autoRefresh)}
+          className={`px-4 py-2 text-white rounded ${autoRefresh ? 'bg-red-600 hover:bg-red-700' : 'bg-yellow-600 hover:bg-yellow-700'}`}
+        >
+          {autoRefresh ? 'Stop Auto-Refresh' : 'Start Auto-Refresh'}
+        </button>
       </div>
 
       {searchResults && (
@@ -214,10 +233,66 @@ export default function MarketData() {
 
       {ohlcData && (
         <div className="mt-4">
-          <h3 className="text-lg font-semibold mb-2">Nifty OHLC Data:</h3>
-          <pre className="bg-gray-900 text-blue-400 p-4 rounded overflow-auto">
-            {JSON.stringify(ohlcData, null, 2)}
-          </pre>
+          <h3 className="text-lg font-semibold mb-2">Nifty Real-time OHLC Data:</h3>
+          {ohlcData.data ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="bg-blue-50 p-4 rounded-lg">
+                <h4 className="font-semibold text-blue-800 mb-2">OHLC Data</h4>
+                <div className="space-y-2">
+                  <div className="flex justify-between">
+                    <span>Open:</span>
+                    <span className="font-bold">₹{ohlcData.data.ohlc?.open || ohlcData.data.realtime?.last_price}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>High:</span>
+                    <span className="font-bold text-green-600">₹{ohlcData.data.ohlc?.high || ohlcData.data.realtime?.last_price}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Low:</span>
+                    <span className="font-bold text-red-600">₹{ohlcData.data.ohlc?.low || ohlcData.data.realtime?.last_price}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Close:</span>
+                    <span className="font-bold">₹{ohlcData.data.ohlc?.close || ohlcData.data.realtime?.last_price}</span>
+                  </div>
+                </div>
+              </div>
+              
+              {ohlcData.data.realtime && (
+                <div className="bg-green-50 p-4 rounded-lg">
+                  <h4 className="font-semibold text-green-800 mb-2">Real-time Data</h4>
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <span>LTP:</span>
+                      <span className="font-bold">₹{ohlcData.data.realtime.last_price}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Change:</span>
+                      <span className={`font-bold ${ohlcData.data.realtime.net_change >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        {ohlcData.data.realtime.net_change >= 0 ? '+' : ''}₹{ohlcData.data.realtime.net_change} 
+                        ({ohlcData.data.realtime.percent_change >= 0 ? '+' : ''}{ohlcData.data.realtime.percent_change}%)
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Volume:</span>
+                      <span className="font-bold">{ohlcData.data.realtime.volume?.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Bid/Ask:</span>
+                      <span className="font-bold">₹{ohlcData.data.realtime.bid_price}/₹{ohlcData.data.realtime.ask_price}</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <pre className="bg-gray-900 text-blue-400 p-4 rounded overflow-auto">
+              {JSON.stringify(ohlcData, null, 2)}
+            </pre>
+          )}
+          <div className="text-xs text-gray-500 mt-2">
+            Last updated: {ohlcData.data?.timestamp ? new Date(ohlcData.data.timestamp).toLocaleString() : 'N/A'}
+          </div>
         </div>
       )}
 

@@ -7,9 +7,25 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!auth) return res.status(401).json({ error: "Missing access token" });
 
   try {
-    // Get Nifty option chain data
+    // Get current and next month expiry dates for Nifty options
+    const currentDate = new Date();
+    const currentYear = currentDate.getFullYear();
+    const currentMonth = currentDate.getMonth();
+    
+    // Get last Thursday of current month (typical Nifty expiry)
+    const getLastThursday = (year: number, month: number) => {
+      const lastDay = new Date(year, month + 1, 0);
+      const day = lastDay.getDay();
+      const lastThursday = new Date(year, month, lastDay.getDate() - (day + 3) % 7);
+      return lastThursday.toISOString().split('T')[0];
+    };
+
+    const currentExpiry = getLastThursday(currentYear, currentMonth);
+    const nextExpiry = getLastThursday(currentYear, currentMonth + 1);
+    
+    // Get Nifty option chain data with expiry date
     const instrumentKey = "NSE_INDEX|Nifty 50";
-    const optionChainUrl = `https://api.upstox.com/v2/option/chain?instrument_key=${encodeURIComponent(instrumentKey)}`;
+    const optionChainUrl = `https://api.upstox.com/v2/option/chain?instrument_key=${encodeURIComponent(instrumentKey)}&expiry_date=${currentExpiry}`;
 
     const response = await axios.get(optionChainUrl, {
       headers: { 
