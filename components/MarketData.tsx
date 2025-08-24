@@ -6,6 +6,7 @@ export default function MarketData() {
   const [data, setData] = useState<any>(null);
   const [greeksData, setGreeksData] = useState<any>(null);
   const [ohlcData, setOhlcData] = useState<any>(null);
+  const [openInterestData, setOpenInterestData] = useState<any>(null);
   const [searchResults, setSearchResults] = useState<any>(null);
   const [stockSymbol, setStockSymbol] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
@@ -63,6 +64,17 @@ export default function MarketData() {
     });
     const json = await res.json();
     setOhlcData(json);
+  };
+
+  const getNiftyOpenInterest = async () => {
+    const token = localStorage.getItem("upstox_token");
+    if (!token) return;
+
+    const res = await fetch("/api/nifty-open-interest", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const json = await res.json();
+    setOpenInterestData(json);
   };
 
   const searchStocks = async () => {
@@ -159,6 +171,12 @@ export default function MarketData() {
         >
           Get Nifty OHLC
         </button>
+        <button
+          onClick={getNiftyOpenInterest}
+          className="px-4 py-2 bg-orange-600 text-white rounded hover:bg-orange-700"
+        >
+          Get Nifty Open Interest
+        </button>
       </div>
 
       {searchResults && (
@@ -194,6 +212,60 @@ export default function MarketData() {
           <pre className="bg-gray-900 text-blue-400 p-4 rounded overflow-auto">
             {JSON.stringify(ohlcData, null, 2)}
           </pre>
+        </div>
+      )}
+
+      {openInterestData && (
+        <div className="mt-4">
+          <h3 className="text-lg font-semibold mb-2">Nifty Open Interest & Option Chain:</h3>
+          {openInterestData.data && openInterestData.data.option_chain ? (
+            <div className="space-y-4">
+              <div className="bg-gray-100 p-3 rounded">
+                <h4 className="font-semibold">Underlying: Nifty 50</h4>
+                <p>Price: ₹{openInterestData.data.underlying_price || 'N/A'}</p>
+                <p>Available Expiries: {openInterestData.data.expiry_dates?.join(', ') || 'N/A'}</p>
+              </div>
+              
+              <div className="overflow-x-auto">
+                <table className="min-w-full bg-white border border-gray-300">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-4 py-2 border">Strike</th>
+                      <th className="px-4 py-2 border">Expiry</th>
+                      <th className="px-4 py-2 border text-green-600">CE Price</th>
+                      <th className="px-4 py-2 border text-green-600">CE Change</th>
+                      <th className="px-4 py-2 border text-green-600">CE OI</th>
+                      <th className="px-4 py-2 border text-red-600">PE Price</th>
+                      <th className="px-4 py-2 border text-red-600">PE Change</th>
+                      <th className="px-4 py-2 border text-red-600">PE OI</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {openInterestData.data.option_chain.map((option: any, index: number) => (
+                      <tr key={index} className="hover:bg-gray-50">
+                        <td className="px-4 py-2 border font-semibold">{option.strike_price}</td>
+                        <td className="px-4 py-2 border">{option.expiry}</td>
+                        <td className="px-4 py-2 border text-green-600">₹{option.call_options.last_price.toFixed(2)}</td>
+                        <td className={`px-4 py-2 border ${option.call_options.change >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                          {option.call_options.change >= 0 ? '+' : ''}{option.call_options.change.toFixed(2)} ({option.call_options.change_percent.toFixed(2)}%)
+                        </td>
+                        <td className="px-4 py-2 border text-green-600">{option.call_options.open_interest.toLocaleString()}</td>
+                        <td className="px-4 py-2 border text-red-600">₹{option.put_options.last_price.toFixed(2)}</td>
+                        <td className={`px-4 py-2 border ${option.put_options.change >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                          {option.put_options.change >= 0 ? '+' : ''}{option.put_options.change.toFixed(2)} ({option.put_options.change_percent.toFixed(2)}%)
+                        </td>
+                        <td className="px-4 py-2 border text-red-600">{option.put_options.open_interest.toLocaleString()}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          ) : (
+            <pre className="bg-gray-900 text-orange-400 p-4 rounded overflow-auto">
+              {JSON.stringify(openInterestData, null, 2)}
+            </pre>
+          )}
         </div>
       )}
     </div>
