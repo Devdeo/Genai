@@ -18,7 +18,7 @@ export default function MarketData() {
   // Auto-refresh functionality
   useEffect(() => {
     if (!autoRefresh) return;
-    
+
     const interval = setInterval(() => {
       getNiftyOHLC();
       getNiftyOpenInterest();
@@ -93,7 +93,7 @@ export default function MarketData() {
 
   const searchStocks = async () => {
     if (!searchQuery.trim()) return;
-    
+
     const token = localStorage.getItem("upstox_token");
     if (!token) return;
 
@@ -106,7 +106,7 @@ export default function MarketData() {
 
   const getStockQuote = async () => {
     if (!stockSymbol.trim()) return;
-    
+
     const token = localStorage.getItem("upstox_token");
     if (!token) return;
 
@@ -151,7 +151,7 @@ export default function MarketData() {
             Search
           </button>
         </div>
-        
+
         <div className="flex gap-2">
           <input
             type="text"
@@ -225,9 +225,92 @@ export default function MarketData() {
       {greeksData && (
         <div className="mt-4">
           <h3 className="text-lg font-semibold mb-2">Nifty Option Greeks:</h3>
-          <pre className="bg-gray-900 text-yellow-400 p-4 rounded overflow-auto">
-            {JSON.stringify(greeksData, null, 2)}
-          </pre>
+          {greeksData.data && Array.isArray(greeksData.data) && greeksData.data.length > 0 ? (
+            <div className="space-y-4">
+              {greeksData.data.map((option: any, index: number) => (
+                <div key={index} className="bg-white border border-gray-300 rounded-lg p-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Strike Info */}
+                    <div className="bg-blue-50 p-3 rounded">
+                      <h4 className="font-semibold text-blue-800 mb-2">
+                        Strike: ₹{option.strike_price} | Expiry: {option.expiry}
+                      </h4>
+                      <p className="text-sm">Spot: ₹{option.underlying_spot_price}</p>
+                      <p className="text-sm">PCR: {option.pcr}</p>
+                    </div>
+
+                    {/* Call Options */}
+                    {option.call_options && (
+                      <div className="bg-green-50 p-3 rounded">
+                        <h5 className="font-semibold text-green-800 mb-2">Call Options (CE)</h5>
+                        <div className="grid grid-cols-2 gap-2 text-sm">
+                          <div>LTP: ₹{option.call_options.market_data.ltp}</div>
+                          <div>Volume: {option.call_options.market_data.volume.toLocaleString()}</div>
+                          <div>OI: {option.call_options.market_data.oi.toLocaleString()}</div>
+                          <div>Prev OI: {option.call_options.market_data.prev_oi.toLocaleString()}</div>
+                          <div>Close: ₹{option.call_options.market_data.close_price}</div>
+                          <div className={`font-bold ${(option.call_options.market_data.ltp - option.call_options.market_data.close_price) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                            Change: {(option.call_options.market_data.ltp - option.call_options.market_data.close_price) >= 0 ? '+' : ''}₹{(option.call_options.market_data.ltp - option.call_options.market_data.close_price).toFixed(2)}
+                          </div>
+                          <div>Bid: ₹{option.call_options.market_data.bid_price}</div>
+                          <div>Ask: ₹{option.call_options.market_data.ask_price}</div>
+                        </div>
+                        {option.call_options.option_greeks && (
+                          <div className="mt-2 pt-2 border-t border-green-200">
+                            <h6 className="font-medium text-green-700 mb-1">Greeks:</h6>
+                            <div className="grid grid-cols-2 gap-1 text-xs">
+                              <div>Delta: {option.call_options.option_greeks.delta}</div>
+                              <div>Gamma: {option.call_options.option_greeks.gamma}</div>
+                              <div>Theta: {option.call_options.option_greeks.theta}</div>
+                              <div>Vega: {option.call_options.option_greeks.vega}</div>
+                              <div>IV: {option.call_options.option_greeks.iv}%</div>
+                              <div>PoP: {option.call_options.option_greeks.pop}%</div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Put Options */}
+                    {option.put_options && (
+                      <div className="bg-red-50 p-3 rounded md:col-span-2">
+                        <h5 className="font-semibold text-red-800 mb-2">Put Options (PE)</h5>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
+                          <div>LTP: ₹{option.put_options.market_data.ltp}</div>
+                          <div>Volume: {option.put_options.market_data.volume.toLocaleString()}</div>
+                          <div>OI: {option.put_options.market_data.oi.toLocaleString()}</div>
+                          <div>Prev OI: {option.put_options.market_data.prev_oi.toLocaleString()}</div>
+                          <div>Close: ₹{option.put_options.market_data.close_price}</div>
+                          <div className={`font-bold ${(option.put_options.market_data.ltp - option.put_options.market_data.close_price) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                            Change: {(option.put_options.market_data.ltp - option.put_options.market_data.close_price) >= 0 ? '+' : ''}₹{(option.put_options.market_data.ltp - option.put_options.market_data.close_price).toFixed(2)}
+                          </div>
+                          <div>Bid: ₹{option.put_options.market_data.bid_price}</div>
+                          <div>Ask: ₹{option.put_options.market_data.ask_price}</div>
+                        </div>
+                        {option.put_options.option_greeks && (
+                          <div className="mt-2 pt-2 border-t border-red-200">
+                            <h6 className="font-medium text-red-700 mb-1">Greeks:</h6>
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-1 text-xs">
+                              <div>Delta: {option.put_options.option_greeks.delta}</div>
+                              <div>Gamma: {option.put_options.option_greeks.gamma}</div>
+                              <div>Theta: {option.put_options.option_greeks.theta}</div>
+                              <div>Vega: {option.put_options.option_greeks.vega}</div>
+                              <div>IV: {option.put_options.option_greeks.iv}%</div>
+                              <div>PoP: {option.put_options.option_greeks.pop}%</div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <pre className="bg-gray-900 text-yellow-400 p-4 rounded overflow-auto">
+              {JSON.stringify(greeksData, null, 2)}
+            </pre>
+          )}
         </div>
       )}
 
@@ -257,7 +340,7 @@ export default function MarketData() {
                   </div>
                 </div>
               </div>
-              
+
               {ohlcData.data.realtime && (
                 <div className="bg-green-50 p-4 rounded-lg">
                   <h4 className="font-semibold text-green-800 mb-2">Real-time Data</h4>
@@ -269,7 +352,7 @@ export default function MarketData() {
                     <div className="flex justify-between">
                       <span>Change:</span>
                       <span className={`font-bold ${ohlcData.data.realtime.net_change >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                        {ohlcData.data.realtime.net_change >= 0 ? '+' : ''}₹{ohlcData.data.realtime.net_change} 
+                        {ohlcData.data.realtime.net_change >= 0 ? '+' : ''}₹{ohlcData.data.realtime.net_change}
                         ({ohlcData.data.realtime.percent_change >= 0 ? '+' : ''}{ohlcData.data.realtime.percent_change}%)
                       </span>
                     </div>
@@ -306,7 +389,7 @@ export default function MarketData() {
                 <p>Price: ₹{openInterestData.data.underlying_price || 'N/A'}</p>
                 <p>Available Expiries: {openInterestData.data.expiry_dates?.join(', ') || 'N/A'}</p>
               </div>
-              
+
               <div className="overflow-x-auto">
                 <table className="min-w-full bg-white border border-gray-300">
                   <thead className="bg-gray-50">
