@@ -8,7 +8,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   // Nifty 50 index instrument key
   const instrumentKey = "NSE_INDEX|Nifty 50";
-  const url = `https://api.upstox.com/v2/market-quote/ohlc?instrument_key=${encodeURIComponent(instrumentKey)}`;
+  const interval = "1d"; // Daily interval - you can change this to "1m", "5m", "15m", "30m", "1h", "1d" etc.
+  const url = `https://api.upstox.com/v2/market-quote/ohlc?instrument_key=${encodeURIComponent(instrumentKey)}&interval=${interval}`;
 
   try {
     const response = await axios.get(url, {
