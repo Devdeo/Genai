@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
+import StockHeatmap from "./StockHeatmap";
 
 export default function MarketData() {
   const [data, setData] = useState<any>(null);
@@ -113,6 +114,11 @@ export default function MarketData() {
 
   return (
     <div className="p-4">
+      {/* Stock Market Heatmap */}
+      <div className="mb-8">
+        <StockHeatmap />
+      </div>
+
       {/* Stock Search Section */}
       <div className="mb-6 p-4 bg-gray-100 rounded-lg">
         <h2 className="text-xl font-semibold mb-4">Stock Search</h2>
